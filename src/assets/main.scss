@@ -1,0 +1,31 @@
+@import "./variables";
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: var(--color-gray-darker);
+  padding: 0;
+  margin: 0;
+}
+
+ul li {
+  list-style: none;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #C2C2C2;
+  border-color: #C2C2C2;
+}
+
+*::-webkit-scrollbar-track {
+  border-radius: 10px;
+}
