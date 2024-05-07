@@ -7,15 +7,11 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    FooterAuth: typeof import('./src/components/Layout/FooterAuth.vue')['default']
-    GuideItem: typeof import('./src/components/Guide/GuideItem.vue')['default']
     HeaderDefault: typeof import('./src/components/Layout/HeaderDefault.vue')['default']
     Icon: typeof import('./src/components/Icon.vue')['default']
-    PreniumBenefits: typeof import('./src/components/Layout/PreniumBenefits.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SidebarAuth: typeof import('./src/components/Layout/SidebarAuth.vue')['default']
-    SidebarMenu: typeof import('./src/components/Layout/SidebarMenu.vue')['default']
     TabRight: typeof import('./src/components/Layout/TabRight.vue')['default']
   }
 }

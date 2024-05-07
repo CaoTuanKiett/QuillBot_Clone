@@ -105,4 +105,14 @@ import imgCat from '@/assets/images/cat.jpg'
     width: 20px;
     height: 20px;
 }
+
+@media screen and (max-width: 768px) {
+    .headerButton {
+        display: none;
+    }
+
+    .headerTitle {
+        padding-left: 0;
+    }
+}
 </style>

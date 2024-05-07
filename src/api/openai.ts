@@ -1,83 +1,72 @@
-export const openaiApi = {
-    async getParaphraseText(content: string, fullContent: string) {
-        try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${import.meta.env.VITE_APP_AI_KEY}`,
-                },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
-                    messages: [
-                        {
-                            role: 'system',
-                            content: `You are a helpful paraphraser.
-                        You should return the matching language of the original text.
-                        You should not change the meaning of the text
-                        You must only reply to the paraphrased text without any extra comments or explanations.
-                        For example
-                        Full text: Mèo là loài rất dễ thương
-                        Paraphrased text: rất dễ thương
-                        Result: rất đáng yêu
-                        For another example
-                        Full text: Cats are very cute animals
-                        Paraphrased text: cute animals
-                        Result: adorable animals
-                        Now please paraphrase this
-                        Full text: ${content}
-                        Paragraphed text: ${fullContent}`,
-                        },
-                        {
-                            role: 'user',
-                            content: 'Hello!',
-                        },
-                    ],
-                }),
-            })
+// node --version # Should be >= 18
+// npm install @google/generative-ai
 
-            const chatCompletion = await response.json()
-            return chatCompletion?.choices?.[0].message?.content || ''
-        }
-        catch {
-            return 'Hề hề'
-        }
-    },
+import {
+  GoogleGenerativeAI,
+  HarmBlockThreshold,
+  HarmCategory,
+} from '@google/generative-ai'
 
-    async getParaphraseTextFull(fullContent: string) {
-        try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${import.meta.env.VITE_APP_AI_KEY}`,
-                },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
-                    messages: [
-                        {
-                            role: 'system',
-                            content: `You are a helpful paraphraser.
-                        You should return the matching language of the original text.
-                        You should not change the meaning of the text
-                        You must only reply to the paraphrased text without any extra comments or explanations.
-                        For example: Mèo là loài rất dễ thương -> Mèo là loài rất đáng yêu
-                        For another example: Cats are very cute animals -> Cats are adorable animals
-                        Now please paraphrase this: ${fullContent}`,
-                        },
-                        {
-                            role: 'user',
-                            content: 'Hello!',
-                        },
-                    ],
-                }),
-            })
+const MODEL_NAME = 'gemini-1.0-pro'
+const API_KEY = 'AIzaSyDh7_frvp-JpGOkF9-QsqTsF6MtmXfVVWw'
 
-            const chatCompletion = await response.json()
-            return chatCompletion?.choices?.[0].message?.content || ''
-        }
-        catch {
-            return 'Hề hề'
-        }
-    },
+const genAI = new GoogleGenerativeAI(API_KEY)
+const model = genAI.getGenerativeModel({ model: MODEL_NAME })
+
+const generationConfig = {
+  temperature: 1,
+  topK: 0,
+  topP: 0.95,
+  maxOutputTokens: 2048,
 }
+
+const safetySettings = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+]
+
+const OpenAi = {
+  async getParaphraseFullContent(fullContent: string) {
+    try {
+      const chat = model.startChat({
+        generationConfig,
+        safetySettings,
+        history: [
+          {
+            role: 'user',
+            parts: [{ text: 'You are a helpful paraphraser.You should return the matching language of the original text.You should not change the meaning of the textYou must only reply to the paraphrased text without any extra comments or explanations.For example: cats are very cute -> cat are adorable animalsFor another example: Mèo là 1 loài dễ thương -> Mèo thật đáng yêu' }],
+          },
+          {
+            role: 'model',
+            parts: [{ text: 'The quick brown fox jumps over the lazy dog. -> A quick brown fox jumped over a lazy dog.' }],
+          },
+        ],
+
+      })
+      const result = await chat.sendMessage(fullContent)
+      const response = result.response
+      console.log(response.text())
+      return response.text()
+    }
+    catch (error) {
+      return ''
+    }
+  },
+
+}
+
+export default OpenAi

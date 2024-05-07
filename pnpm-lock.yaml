@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@google/generative-ai':
+    specifier: ^0.10.0
+    version: 0.10.0
   element-plus:
     specifier: ^2.6.1
     version: 2.6.1(vue@3.4.20)
@@ -761,6 +764,11 @@ packages:
 
   /@floating-ui/utils@0.2.1:
     resolution: {integrity: sha512-9TANp6GPoMtYzQdt54kfAyMmz1+osLlXdg2ENroU7zzrtflTLrrC/lgrIfaSe+Wu0b89GKccT7vxXA0MoAIO+Q==}
+    dev: false
+
+  /@google/generative-ai@0.10.0:
+    resolution: {integrity: sha512-fZJEL8DcDgvBCguLdaAdBBEoh+83LDXK3m9rVh5iksvwVJDgZqkpsLGKJuM5FEBKltWhbJ62WSyMEUGgy8eMUg==}
+    engines: {node: '>=18.0.0'}
     dev: false
 
   /@humanwhocodes/config-array@0.11.14:

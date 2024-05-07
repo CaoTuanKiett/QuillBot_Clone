@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { openaiApi } from '@/api/openai'
+import OpenAi from '@/api/openai'
 
 const text = ref<string>('')
 const result = ref<string>('')
@@ -24,7 +24,7 @@ function pasteText() {
 
 async function parapharseText() {
   try {
-    const res = await openaiApi.getParaphraseTextFull(text.value)
+    const res = await OpenAi.getParaphraseFullContent(text.value)
     result.value = res
   }
   catch (error) {
@@ -47,19 +47,22 @@ async function parapharseText() {
             {{ item }}
           </li>
         </ul>
-        <div :class="$style.homeTextAreaBox">
-          <div :class="$style.homeTextAreaBoxHeader">
-            <span :class="$style.homeTextAreaBoxHeaderTitle">Models:</span>
-            <span :class="$style.homeTextAreaBoxHeaderValue">Standard</span>
+        <div :class="$style.homeTextFillBox">
+          <div :class="$style.homeTextFillBoxHeader">
+            <span :class="$style.homeTextFillBoxHeaderTitle">Models:</span>
+            <span :class="$style.homeTextFillBoxHeaderValueActive">Standard</span>
+            <span :class="$style.homeTextFillBoxHeaderValue">Fluency</span>
+            <span :class="$style.homeTextFillBoxHeaderValue">Natural</span>
+            <span :class="$style.homeTextFillBoxHeaderValue">Academic</span>
           </div>
-          <div :class="$style.homeTextArea">
-            <div :class="$style.homeTextAreaLeftBox">
+          <div :class="$style.homeTextFill">
+            <div :class="$style.homeTextFillLeftBox">
               <textarea
-                id="" v-model="text" :class="$style.homeTextAreaTag" name="" cols="30" rows="25"
+                id="" v-model="text" :class="$style.homeTextFillTag" name="" cols="30" rows="25"
                 placeholder="To rewrite text, enter or paste it here and press &quot;Paraphrase.&quot;"
               />
-              <div v-show="!text" :class="$style.homeTextAreaBoxPaste" @click="pasteText">
-                <div :class="$style.homeTextAreaBoxPasteBox">
+              <div v-show="!text" :class="$style.homeTextFillBoxPaste" @click="pasteText">
+                <div :class="$style.homeTextFillBoxPasteBox">
                   <svg
                     :class="$style.homeTextArerPasteIcon"
                     class="MuiSvgIcon-root MuiSvgIcon-colorPrimary MuiSvgIcon-fontSizeMedium" focusable="false"
@@ -73,19 +76,19 @@ async function parapharseText() {
                   <i>Paste Text</i>
                 </div>
               </div>
-              <div :class="$style.homeTextAreaLeftFooter">
-                <div :class="$style.homeTextAreaLeftUpload">
+              <div :class="$style.homeTextFillLeftFooter">
+                <div :class="$style.homeTextFillLeftUpload">
                   <Icon :class="$style.homeIcon" icon="bi:cloud-arrow-up" />
                   <span>Upload Doc</span>
                 </div>
-                <button :class="$style.homeTextAreaLeftButton" @click="parapharseText">
+                <button :class="$style.homeTextFillLeftButton" @click="parapharseText">
                   Paraphrase
                 </button>
               </div>
             </div>
-            <div :class="$style.homeTextAreaRightBox">
+            <div :class="$style.homeTextFillRightBox">
               <textarea
-                id="" v-model="result" :class="$style.homeTextAreaTag" disable name="" cols="30" rows="25"
+                id="" v-model="result" :class="$style.homeTextFillTag" disable name="" cols="30" rows="25"
                 placeholder="To rewrite text, enter or paste it here and press &quot;Paraphrase.&quot;"
               />
             </div>
@@ -138,7 +141,7 @@ async function parapharseText() {
 .homeContentParaPhrase {
   position: relative;
   padding: 25px 100px 44px 40px;
-
+  height: 100vh;
 }
 
 .homeContentLanguageList {
@@ -157,7 +160,7 @@ async function parapharseText() {
       background-color: #ffff;
 
       &:hover {
-        background-color: #25252514;
+        background-color: #ffffff9e;
       }
     }
 
@@ -167,12 +170,12 @@ async function parapharseText() {
   }
 }
 
-.homeTextAreaBox {
+.homeTextFillBox {
   position: relative;
   box-shadow: rgba(0, 0, 0, 0.3) 0px 26px 38px, rgba(0, 0, 0, 0.22) 0px 24px 12px;
 }
 
-.homeTextAreaBoxHeader {
+.homeTextFillBoxHeader {
   position: sticky;
   top: 49px;
   z-index: 10;
@@ -184,37 +187,43 @@ async function parapharseText() {
   border-bottom: 1px solid #DEE1E3;
 }
 
-.homeTextAreaBoxHeaderTitle {
+.homeTextFillBoxHeaderTitle {
   color: #505050;
   padding: 13px 12px 12px 20px;
   font-weight: 700;
   font-size: 16px;
 }
 
-.homeTextAreaBoxHeaderValue {
+.homeTextFillBoxHeaderValueActive {
   color: #499557;
   font-weight: 500;
   padding: 14px 9px 11px 9px;
   border-bottom: 2px solid #499557;
 }
 
-.homeTextArea {
+.homeTextFillBoxHeaderValue {
+  color: black;
+  font-weight: 500;
+  padding: 14px 9px 11px 9px;
+}
+
+.homeTextFill {
   background-color: #ffff;
   display: flex;
   align-items: start;
 }
 
-.homeTextAreaLeftBox {
+.homeTextFillLeftBox {
   position: relative;
   width: 50%;
   border-right: 3px solid rgba(0, 0, 0, 0.2);
 }
 
-.homeTextAreaRightBox {
+.homeTextFillRightBox {
   width: 50%;
 }
 
-.homeTextAreaTag {
+.homeTextFillTag {
     resize: none;
     width: 100%;
     border: none;
@@ -231,14 +240,14 @@ async function parapharseText() {
     }
 }
 
-.homeTextAreaLeftFooter {
+.homeTextFillLeftFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding-right: 12px;
 }
 
-.homeTextAreaLeftUpload {
+.homeTextFillLeftUpload {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -260,7 +269,7 @@ async function parapharseText() {
   height: 24px;
 }
 
-.homeTextAreaLeftButton {
+.homeTextFillLeftButton {
   padding: 5px 25px 6px;
   font-size: 17.5px;
   font-weight: bold;
@@ -330,7 +339,7 @@ async function parapharseText() {
   }
 }
 
-.homeTextAreaBoxPaste {
+.homeTextFillBoxPaste {
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -345,7 +354,7 @@ async function parapharseText() {
   border-radius: 6px;
 }
 
-.homeTextAreaBoxPasteBox {
+.homeTextFillBoxPasteBox {
   font-size: 12px;
   line-height: 16px;
   text-align: center;
