@@ -8,9 +8,8 @@ import {
 } from '@google/generative-ai'
 
 const MODEL_NAME = 'gemini-1.0-pro'
-const API_KEY = 'AIzaSyDh7_frvp-JpGOkF9-QsqTsF6MtmXfVVWw'
 
-const genAI = new GoogleGenerativeAI(API_KEY)
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY_OPEN_AI)
 const model = genAI.getGenerativeModel({ model: MODEL_NAME })
 
 const generationConfig = {

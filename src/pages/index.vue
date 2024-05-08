@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import OpenAi from '@/api/openai'
+import iconLoading from '@/assets/icons/loading.svg'
+import iconCheck from '@/assets/icons/check.svg'
 
 const text = ref<string>('')
 const result = ref<string>('')
@@ -31,10 +33,105 @@ async function parapharseText() {
     console.error(error)
   }
 }
+
+const tooltipVisible = ref<boolean>(false)
+const resultTooltip = ref<string>('')
+const boundingRect = ref<{ x: number, y: number }>({ x: 0, y: 0 })
+
+async function parapharse(text: string) {
+  try {
+    const res = await OpenAi.getParaphraseFullContent(text)
+    console.log(res)
+
+    resultTooltip.value = res
+  }
+  catch (error) {
+    console.error(error)
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('selectionchange', () => {
+    const selection = window.getSelection()
+
+    if (!selection?.rangeCount || selection?.toString().length === 0) {
+      tooltipVisible.value = false
+      return
+    }
+
+    const range = selection.getRangeAt(0)
+
+    const rect = range.getBoundingClientRect()
+
+    boundingRect.value = {
+      x: rect.right,
+      y: rect.top,
+    }
+  })
+})
+
+function handleMouseUp() {
+  const selection = window.getSelection()
+
+  if (!selection?.rangeCount || selection?.toString().length === 0) {
+    tooltipVisible.value = false
+    return
+  }
+
+  tooltipVisible.value = true
+  console.log(selection?.toString())
+  parapharse(selection?.toString())
+}
+
+function handleReplace() {
+  const selection = window.getSelection()
+
+  const range = selection?.getRangeAt(0)
+  console.log('range', range)
+
+  range?.deleteContents()
+  range?.insertNode(document.createTextNode(resultTooltip.value))
+}
+
+function handleBlur() {
+  tooltipVisible.value = false
+}
 </script>
 
 <template>
   <div>
+    <div
+      v-if="tooltipVisible"
+      :style="{
+        position: 'fixed',
+        top: `${boundingRect.y}px`,
+        left: `${boundingRect.x}px`,
+        backgroundColor: 'white',
+        minWidth: '20px',
+        minHeight: '20px',
+        pointerEvents: 'none',
+        zIndex: 999,
+        padding: '10px',
+        borderRadius: '8px',
+        boxShadow: 'rgba(17, 17, 26, 0.1) 0px 4px 16px, rgba(17, 17, 26, 0.1) 0px 8px 24px, rgba(17, 17, 26, 0.1) 0px 16px 56px',
+      }"
+    >
+      <div v-if="!resultTooltip" :class="$style.iconBox">
+        <img :src="iconLoading" :class="$style.temIcon" alt="iconLoading">
+      </div>
+      <div
+        v-else
+        :style="{
+          cursor: 'pointer',
+          zIndex: 9999,
+        }"
+      >
+        <p>
+          {{ resultTooltip }}
+        </p>
+        <img :src="iconCheck" alt="iconCheck " @click="handleReplace">
+      </div>
+    </div>
     <SidebarAuth :class="$style.homeSidebar" />
     <div :class="$style.homeContent">
       <div :class="$style.homeContentParaPhrase">
@@ -57,9 +154,20 @@ async function parapharseText() {
           </div>
           <div :class="$style.homeTextFill">
             <div :class="$style.homeTextFillLeftBox">
-              <textarea
+              <!-- <textarea
                 id="" v-model="text" :class="$style.homeTextFillTag" name="" cols="30" rows="25"
                 placeholder="To rewrite text, enter or paste it here and press &quot;Paraphrase.&quot;"
+              /> -->
+              <div
+                id="bounding"
+                contenteditable
+                :class="$style.homeTextFillTag"
+                :style="{
+                  height: '300px',
+                  padding: '30px 36px 8px 20px',
+                }"
+                @mouseup="handleMouseUp"
+                @blur="handleBlur"
               />
               <div v-show="!text" :class="$style.homeTextFillBoxPaste" @click="pasteText">
                 <div :class="$style.homeTextFillBoxPasteBox">
@@ -81,7 +189,10 @@ async function parapharseText() {
                   <Icon :class="$style.homeIcon" icon="bi:cloud-arrow-up" />
                   <span>Upload Doc</span>
                 </div>
-                <button :class="$style.homeTextFillLeftButton" @click="parapharseText">
+                <button
+                  :class="$style.homeTextFillLeftButton"
+                  @click="handleReplace"
+                >
                   Paraphrase
                 </button>
               </div>
