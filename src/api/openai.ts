@@ -58,7 +58,7 @@ const OpenAi = {
       })
       const result = await chat.sendMessage(fullContent)
       const response = result.response
-      console.log(response.text())
+      // console.log(response.text())
       return response.text()
     }
     catch (error) {

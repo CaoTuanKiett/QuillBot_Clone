@@ -41,7 +41,7 @@ const boundingRect = ref<{ x: number, y: number }>({ x: 0, y: 0 })
 async function parapharse(text: string) {
   try {
     const res = await OpenAi.getParaphraseFullContent(text)
-    console.log(res)
+    console.log('parapharse', res)
 
     resultTooltip.value = res
   }
@@ -79,7 +79,7 @@ function handleMouseUp() {
   }
 
   tooltipVisible.value = true
-  console.log(selection?.toString())
+  console.log('handleMouseUp', selection?.toString())
   parapharse(selection?.toString())
 }
 
@@ -91,10 +91,15 @@ function handleReplace() {
 
   range?.deleteContents()
   range?.insertNode(document.createTextNode(resultTooltip.value))
+  tooltipVisible.value = false
+  resultTooltip.value = ''
+  selection?.removeAllRanges()
+  console.log('selection?', selection)
 }
 
 function handleBlur() {
   tooltipVisible.value = false
+  resultTooltip.value = ''
 }
 </script>
 
@@ -113,7 +118,7 @@ function handleBlur() {
         zIndex: 999,
         padding: '10px',
         borderRadius: '8px',
-        boxShadow: 'rgba(17, 17, 26, 0.1) 0px 4px 16px, rgba(17, 17, 26, 0.1) 0px 8px 24px, rgba(17, 17, 26, 0.1) 0px 16px 56px',
+        boxShadow: 'rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset',
       }"
     >
       <div v-if="!resultTooltip" :class="$style.iconBox">
@@ -124,12 +129,18 @@ function handleBlur() {
         :style="{
           cursor: 'pointer',
           zIndex: 9999,
+          display: 'flex',
         }"
+        @blur="handleBlur"
       >
-        <p>
+        <p
+          :style="{
+            paddingRight: 10,
+          }"
+        >
           {{ resultTooltip }}
         </p>
-        <img :src="iconCheck" alt="iconCheck " @click="handleReplace">
+        <img :style="{ pointerEvents: 'visible', width: 20 }" :src="iconCheck" alt="iconCheck " @mousedown="handleReplace">
       </div>
     </div>
     <SidebarAuth :class="$style.homeSidebar" />
