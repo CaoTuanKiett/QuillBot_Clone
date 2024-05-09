@@ -202,7 +202,7 @@ function handleBlur() {
                 </div>
                 <button
                   :class="$style.homeTextFillLeftButton"
-                  @click="handleReplace"
+                  @click="parapharseText"
                 >
                   Paraphrase
                 </button>
