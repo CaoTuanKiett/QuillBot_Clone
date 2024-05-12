@@ -2,6 +2,12 @@
 import OpenAi from '@/api/openai'
 import iconLoading from '@/assets/icons/loading.svg'
 import iconCheck from '@/assets/icons/check.svg'
+import iconAI from '@/assets/icons/iconAI.svg'
+import iconClose from '@/assets/icons/iconClose.svg'
+import iconRefesh from '@/assets/icons/iconRefesh.svg'
+import iconDown from '@/assets/icons/iconDown.svg'
+import iconApply from '@/assets/icons/iconApply.svg'
+import imgLogo from '@/assets/images/logo.png'
 
 const text = ref<string>('')
 const result = ref<string>('')
@@ -34,9 +40,16 @@ async function parapharseText() {
   }
 }
 
-const tooltipVisible = ref<boolean>(false)
+type SelectionSatuts = 'initial' | 'tooltip' | 'popover'
+
 const resultTooltip = ref<string>('')
 const boundingRect = ref<{ x: number, y: number }>({ x: 0, y: 0 })
+const status = ref<SelectionSatuts>('initial')
+let selection: Selection | null = null
+const mousePosition = ref<{ x: number, y: number }>({ x: 0, y: 0 })
+const inputRef = ref<HTMLElement | null>(null)
+const tooltipRef = ref<HTMLElement | null>(null)
+const popoverRef = ref<HTMLElement | null>(null)
 
 async function parapharse(text: string) {
   try {
@@ -52,12 +65,10 @@ async function parapharse(text: string) {
 
 onMounted(() => {
   document.addEventListener('selectionchange', () => {
-    const selection = window.getSelection()
+    selection = window.getSelection()
 
-    if (!selection?.rangeCount || selection?.toString().length === 0) {
-      tooltipVisible.value = false
+    if (!selection?.rangeCount || selection?.toString().length === 0)
       return
-    }
 
     const range = selection.getRangeAt(0)
 
@@ -68,45 +79,145 @@ onMounted(() => {
       y: rect.top,
     }
   })
+
+  document.addEventListener('mousemove', (e) => {
+    mousePosition.value = {
+      x: e.clientX,
+      y: e.clientY,
+    }
+  })
 })
 
 function handleMouseUp() {
   const selection = window.getSelection()
 
-  if (!selection?.rangeCount || selection?.toString().length === 0) {
-    tooltipVisible.value = false
+  if (!selection || selection?.toString().length === 0)
     return
-  }
 
-  tooltipVisible.value = true
+  status.value = 'tooltip'
   console.log('handleMouseUp', selection?.toString())
-  parapharse(selection?.toString())
 }
 
 function handleReplace() {
-  const selection = window.getSelection()
+  if (!selection?.rangeCount)
+    return
 
   const range = selection?.getRangeAt(0)
   console.log('range', range)
 
   range?.deleteContents()
   range?.insertNode(document.createTextNode(resultTooltip.value))
-  tooltipVisible.value = false
+  status.value = 'initial'
   resultTooltip.value = ''
-  selection?.removeAllRanges()
   console.log('selection?', selection)
 }
 
+function reselectElement() {
+  if (!selection?.anchorNode || !selection?.focusNode || status.value === 'initial')
+    return
+
+  const range = document.createRange()
+
+  range.setStart(selection?.anchorNode, selection?.anchorOffset || 0)
+  range.setEnd(selection?.focusNode, selection?.focusOffset || 0)
+
+  selection.removeAllRanges()
+  selection.addRange(range)
+}
+
 function handleBlur() {
-  tooltipVisible.value = false
-  resultTooltip.value = ''
+  if (inputRef.value && isisMouseInElement(inputRef.value) || tooltipRef.value && isisMouseInElement(tooltipRef.value) || popoverRef.value && isisMouseInElement(popoverRef.value) || status.value === 'popover')
+    reselectElement()
+}
+
+function handleOpenPopover() {
+  if (!selection || selection?.toString().length === 0)
+    return
+  status.value = 'popover'
+
+  parapharse(selection?.toString())
+}
+
+function isisMouseInElement(element: HTMLElement) {
+  const elemenRect = element.getBoundingClientRect()
+  return (
+    mousePosition.value.x >= elemenRect.left
+    && mousePosition.value.x <= elemenRect.right
+    && mousePosition.value.y >= elemenRect.top
+    && mousePosition.value.y <= elemenRect.bottom
+  )
 }
 </script>
 
 <template>
   <div>
     <div
-      v-if="tooltipVisible"
+      id="popoverBox"
+      :class="$style.popoverBox"
+    >
+      <div :class="$style.popoverBoxHeader">
+        <div :class="$style.popoverBoxHeaderLeft">
+          <img :src="iconAI" alt="iconAI">
+          <p>S-Group Paraphraser</p>
+        </div>
+        <img :src="iconClose" alt="iconClose" :class="$style.popoverBoxHeaderRight">
+      </div>
+      <div :class="$style.popoverBoxContainer">
+        <div :class="$style.popoverBoxContainerHeader">
+          <div :class="$style.popoverBoxContainerHeaderLeft">
+            <img :src="iconRefesh" alt="iconRefesh">
+            <p>Refresh</p>
+          </div>
+          <div :class="$style.popoverBoxContainerHeaderRight">
+            <img :class="$style.popoverBoxIconDownLeft" :src="iconDown" alt="iconDown">
+            <p>1/1</p>
+            <img :class="$style.popoverBoxIconDownRight" :src="iconDown" alt="iconDown">
+          </div>
+        </div>
+        <div :class="$style.popoverBoxContainerBody">
+          <p>
+            <!-- {{ resultTooltip }} -->
+            Cats, those mysterious and elegant creatures,
+          </p>
+        </div>
+      </div>
+      <div :class="$style.popoverBoxFooter">
+        <button :class="$style.popoverBoxFooterCopy">
+          Copy
+        </button>
+        <button :class="$style.popoverBoxFooterApply" @click="handleReplace">
+          <img :src="iconApply" alt="iconApply">
+          Apply
+        </button>
+      </div>
+    </div>
+    <div
+      id="mousePosition"
+      style="position: fixed; top: 0; right: 0; padding: 10px; background-color: #f1f1f1; z-index: 999;"
+    >
+      x = {{ mousePosition.x }}
+      y = {{ mousePosition.y }}
+    </div>
+    <img
+      v-if="status === 'tooltip'"
+      ref="tooltipRef"
+      :src="imgLogo"
+      :style="{
+        position: 'fixed',
+        top: `${boundingRect.y}px`,
+        left: `${boundingRect.x}px`,
+        width: '20px',
+        height: '20px',
+        zIndex: 999,
+        padding: '2px',
+        borderRadius: '4px',
+        boxShadow: 'rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset',
+      }"
+      @click="handleOpenPopover"
+    >
+    <div
+      v-else-if="status === 'popover'"
+      ref="popoverRef"
       :style="{
         position: 'fixed',
         top: `${boundingRect.y}px`,
@@ -171,6 +282,7 @@ function handleBlur() {
               /> -->
               <div
                 id="bounding"
+                ref="inputRef"
                 contenteditable
                 :class="$style.homeTextFillTag"
                 :style="{
@@ -496,5 +608,167 @@ function handleBlur() {
 .homeTextArerPasteIcon {
   color: #499557;
   width: 24px;
+}
+
+.popoverBox {
+  position: fixed;
+  top: 100px;
+  left: 100px;
+  width: 480px;
+  max-height: 278px;
+  background-color: white;
+  padding: 12px;
+  z-index: 998;
+  border-radius: 8px;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 4px 0px 15px 12px;
+}
+
+.popoverBoxHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.popoverBoxHeaderLeft {
+  display: flex;
+  align-items: center;
+
+  img {
+    width: 28px;
+    margin-right: 8px;
+  }
+
+  p {
+    font-size: 16px;
+    font-weight: 600;
+    color: #555;
+  }
+}
+
+.popoverBoxHeaderRight {
+  cursor: pointer;
+}
+
+.popoverBoxContainer {
+  padding: 20px;
+}
+
+.popoverBoxContainerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  img {
+    width: 24px;
+  }
+}
+
+.popoverBoxIconDownRight {
+  transform: rotate(180deg);
+}
+
+.popoverBoxContainerHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  img {
+    width: 24px;
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 600;
+    color: #A9A9A9;
+  }
+}
+
+.popoverBoxContainerHeaderRight {
+  display: flex;
+  align-items: center;
+
+  img {
+    width: 24px;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 600;
+    color: #A9A9A9;
+  }
+}
+
+.popoverBoxContainerBody {
+  width: 424px;
+  max-height: 120px;
+  overflow-y: auto;
+  background-color: #f1f1f1;
+  padding: 12px;
+  border-radius: 8px;
+
+  p {
+    font-size: 16px;
+    color: #555;
+    text-align: justify;
+  }
+}
+
+.popoverBoxFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.popoverBoxFooterApply {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 95px;
+  height: 36px;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #4643DD;
+  color: white;
+  border-radius: 26px;
+  cursor: pointer;
+  border: none;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  img {
+    width: 22px;
+  }
+}
+
+.popoverBoxFooterCopy {
+  width: 66px;
+  height: 36px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  background-color: white;
+  border-radius: 26px;
+  border: solid 1px #DADCE0;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
 }
 </style>
