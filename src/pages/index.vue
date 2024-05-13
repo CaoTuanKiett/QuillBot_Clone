@@ -147,50 +147,15 @@ function isisMouseInElement(element: HTMLElement) {
     && mousePosition.value.y <= elemenRect.bottom
   )
 }
+
+function handleClosePopover() {
+  status.value = 'initial'
+  resultTooltip.value = ''
+}
 </script>
 
 <template>
   <div>
-    <div
-      id="popoverBox"
-      :class="$style.popoverBox"
-    >
-      <div :class="$style.popoverBoxHeader">
-        <div :class="$style.popoverBoxHeaderLeft">
-          <img :src="iconAI" alt="iconAI">
-          <p>S-Group Paraphraser</p>
-        </div>
-        <img :src="iconClose" alt="iconClose" :class="$style.popoverBoxHeaderRight">
-      </div>
-      <div :class="$style.popoverBoxContainer">
-        <div :class="$style.popoverBoxContainerHeader">
-          <div :class="$style.popoverBoxContainerHeaderLeft">
-            <img :src="iconRefesh" alt="iconRefesh">
-            <p>Refresh</p>
-          </div>
-          <div :class="$style.popoverBoxContainerHeaderRight">
-            <img :class="$style.popoverBoxIconDownLeft" :src="iconDown" alt="iconDown">
-            <p>1/1</p>
-            <img :class="$style.popoverBoxIconDownRight" :src="iconDown" alt="iconDown">
-          </div>
-        </div>
-        <div :class="$style.popoverBoxContainerBody">
-          <p>
-            <!-- {{ resultTooltip }} -->
-            Cats, those mysterious and elegant creatures,
-          </p>
-        </div>
-      </div>
-      <div :class="$style.popoverBoxFooter">
-        <button :class="$style.popoverBoxFooterCopy">
-          Copy
-        </button>
-        <button :class="$style.popoverBoxFooterApply" @click="handleReplace">
-          <img :src="iconApply" alt="iconApply">
-          Apply
-        </button>
-      </div>
-    </div>
     <div
       id="mousePosition"
       style="position: fixed; top: 0; right: 0; padding: 10px; background-color: #f1f1f1; z-index: 999;"
@@ -215,7 +180,50 @@ function isisMouseInElement(element: HTMLElement) {
       }"
       @click="handleOpenPopover"
     >
+    <!-- popover -->
     <div
+      v-else-if="status === 'popover'"
+      id="popoverBox"
+      :class="$style.popoverBox"
+    >
+      <div :class="$style.popoverBoxHeader">
+        <div :class="$style.popoverBoxHeaderLeft">
+          <img :src="iconAI" alt="iconAI">
+          <p>S-Group Paraphraser</p>
+        </div>
+        <img :src="iconClose" alt="iconClose" :class="$style.popoverBoxHeaderRight" @click="handleClosePopover">
+      </div>
+      <div :class="$style.popoverBoxContainer">
+        <div :class="$style.popoverBoxContainerHeader">
+          <div :class="$style.popoverBoxContainerHeaderLeft">
+            <img :src="iconRefesh" alt="iconRefesh">
+            <p>Refresh</p>
+          </div>
+          <div :class="$style.popoverBoxContainerHeaderRight">
+            <img :class="$style.popoverBoxIconDownLeft" :src="iconDown" alt="iconDown">
+            <p>1/1</p>
+            <img :class="$style.popoverBoxIconDownRight" :src="iconDown" alt="iconDown">
+          </div>
+        </div>
+        <div :class="$style.popoverBoxContainerBody">
+          <img v-if="!resultTooltip" :src="iconLoading" :class="$style.temIcon" alt="iconLoading">
+          <p v-else>
+            {{ resultTooltip }}
+          <!-- Cats, those mysterious and elegant creatures, -->
+          </p>
+        </div>
+      </div>
+      <div :class="$style.popoverBoxFooter">
+        <button :class="$style.popoverBoxFooterCopy">
+          Copy
+        </button>
+        <button :class="$style.popoverBoxFooterApply" @click="handleReplace">
+          <img :src="iconApply" alt="iconApply">
+          Apply
+        </button>
+      </div>
+    </div>
+    <!-- <div
       v-else-if="status === 'popover'"
       ref="popoverRef"
       :style="{
@@ -253,7 +261,7 @@ function isisMouseInElement(element: HTMLElement) {
         </p>
         <img :style="{ pointerEvents: 'visible', width: 20 }" :src="iconCheck" alt="iconCheck " @mousedown="handleReplace">
       </div>
-    </div>
+    </div> -->
     <SidebarAuth :class="$style.homeSidebar" />
     <div :class="$style.homeContent">
       <div :class="$style.homeContentParaPhrase">
