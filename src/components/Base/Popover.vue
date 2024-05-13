@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { defineProps } from 'vue'
 import iconLoading from '@/assets/icons/loading.svg'
 import iconAI from '@/assets/icons/iconAI.svg'
 import iconClose from '@/assets/icons/iconClose.svg'
-import iconRefesh from '@/assets/icons/iconRefesh.svg'
+import iconRefresh from '@/assets/icons/iconRefresh.svg'
 import iconDown from '@/assets/icons/iconDown.svg'
 import iconApply from '@/assets/icons/iconApply.svg'
 
@@ -11,13 +12,9 @@ defineProps({
     type: String,
     required: true,
   },
-  // status: {
-  //   type: String,
-  //   required: true,
-  // },
   popoverRef: {
-    type: [String, HTMLElement, null],
-    required: true,
+    type: [String, HTMLElement],
+    default: null,
   },
   handleBlur: {
     type: Function,
@@ -27,13 +24,16 @@ defineProps({
     type: Function,
     required: true,
   },
+  handleClosePopover: {
+    type: Function,
+    required: true,
+  },
 })
 </script>
 
 <template>
   <div
     id="popoverBox"
-    :ref="popoverRef"
     :class="$style.popoverBox"
   >
     <div :class="$style.popoverBoxHeader">
@@ -41,12 +41,12 @@ defineProps({
         <img :src="iconAI" alt="iconAI">
         <p>S-Group Paraphraser</p>
       </div>
-      <img :src="iconClose" alt="iconClose" :class="$style.popoverBoxHeaderRight" @click="handleClosePopover">
+      <img :src="iconClose" alt="iconClose" :class="$style.popoverBoxHeaderRight" @click="handleClosePopover()">
     </div>
     <div :class="$style.popoverBoxContainer">
       <div :class="$style.popoverBoxContainerHeader">
         <div :class="$style.popoverBoxContainerHeaderLeft">
-          <img :src="iconRefesh" alt="iconRefesh">
+          <img :src="iconRefresh" alt="iconRefresh">
           <p>Refresh</p>
         </div>
         <div :class="$style.popoverBoxContainerHeaderRight">

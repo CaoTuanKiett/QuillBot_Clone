@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import OpenAi from '@/api/openai'
 import iconLoading from '@/assets/icons/loading.svg'
-import iconCheck from '@/assets/icons/check.svg'
+// import iconCheck from '@/assets/icons/check.svg'
 import iconAI from '@/assets/icons/iconAI.svg'
 import iconClose from '@/assets/icons/iconClose.svg'
 import iconRefesh from '@/assets/icons/iconRefesh.svg'
 import iconDown from '@/assets/icons/iconDown.svg'
 import iconApply from '@/assets/icons/iconApply.svg'
+import iconPaste from '@/assets/icons/paste.svg'
 import imgLogo from '@/assets/images/logo.png'
 
 const text = ref<string>('')
@@ -32,7 +33,10 @@ function pasteText() {
 
 async function parapharseText() {
   try {
+    console.log('parapharseText', text.value)
+
     const res = await OpenAi.getParaphraseFullContent(text.value)
+    console.log('parapharseText res', res)
     result.value = res
   }
   catch (error) {
@@ -66,6 +70,7 @@ async function parapharse(text: string) {
 onMounted(() => {
   document.addEventListener('selectionchange', () => {
     selection = window.getSelection()
+    console.log('selectionchange', selection)
 
     if (!selection?.rangeCount || selection?.toString().length === 0)
       return
@@ -103,18 +108,20 @@ function handleReplace() {
     return
 
   const range = selection?.getRangeAt(0)
-  console.log('range', range)
 
   range?.deleteContents()
   range?.insertNode(document.createTextNode(resultTooltip.value))
   status.value = 'initial'
   resultTooltip.value = ''
-  console.log('selection?', selection)
 }
 
 function reselectElement() {
-  if (!selection?.anchorNode || !selection?.focusNode || status.value === 'initial')
+  if (!selection?.anchorNode || !selection?.focusNode || status.value === 'initial') {
+    console.log('bleee')
+
+    selection?.removeAllRanges()
     return
+  }
 
   const range = document.createRange()
 
@@ -152,6 +159,14 @@ function handleClosePopover() {
   status.value = 'initial'
   resultTooltip.value = ''
 }
+
+function handleInput(event: any) {
+  text.value = event.target.textContent
+}
+
+function handleInputResult(event: any) {
+  result.value = event.target.textContent
+}
 </script>
 
 <template>
@@ -185,6 +200,10 @@ function handleClosePopover() {
       v-else-if="status === 'popover'"
       id="popoverBox"
       :class="$style.popoverBox"
+      :style="{
+        top: `${boundingRect.y}px`,
+        left: `${boundingRect.x}px`,
+      }"
     >
       <div :class="$style.popoverBoxHeader">
         <div :class="$style.popoverBoxHeaderLeft">
@@ -293,25 +312,13 @@ function handleClosePopover() {
                 ref="inputRef"
                 contenteditable
                 :class="$style.homeTextFillTag"
-                :style="{
-                  height: '300px',
-                  padding: '30px 36px 8px 20px',
-                }"
                 @mouseup="handleMouseUp"
                 @blur="handleBlur"
+                @input="handleInput"
               />
               <div v-show="!text" :class="$style.homeTextFillBoxPaste" @click="pasteText">
                 <div :class="$style.homeTextFillBoxPasteBox">
-                  <svg
-                    :class="$style.homeTextArerPasteIcon"
-                    class="MuiSvgIcon-root MuiSvgIcon-colorPrimary MuiSvgIcon-fontSizeMedium" focusable="false"
-                    aria-hidden="true" viewBox="0 0 24 29" width="24" height="29" style="font-size: 30px;"
-                  >
-                    <path
-                      width="24" height="29" viewBox="0 0 24 29" fill="#499557" xmlns="http://www.w3.org/2000/svg"
-                      d="M20.7418 3.25678H15.4522C14.9207 1.78883 13.5286 0.72583 11.8835 0.72583C10.2384 0.72583 8.84639 1.78883 8.31489 3.25678H3.02521C1.63319 3.25678 0.494263 4.3957 0.494263 5.78772V26.0353C0.494263 27.4273 1.63319 28.5662 3.02521 28.5662H20.7418C22.1339 28.5662 23.2728 27.4273 23.2728 26.0353V5.78772C23.2728 4.3957 22.1339 3.25678 20.7418 3.25678ZM11.8835 3.25678C12.5795 3.25678 13.149 3.82624 13.149 4.52225C13.149 5.21826 12.5795 5.78772 11.8835 5.78772C11.1875 5.78772 10.618 5.21826 10.618 4.52225C10.618 3.82624 11.1875 3.25678 11.8835 3.25678ZM20.7418 26.0353H3.02521V5.78772H5.55615V9.58414H18.2109V5.78772H20.7418V26.0353Z"
-                    />
-                  </svg>
+                  <img :src="iconPaste" alt="iconPaste">
                   <i>Paste Text</i>
                 </div>
               </div>
@@ -329,9 +336,18 @@ function handleClosePopover() {
               </div>
             </div>
             <div :class="$style.homeTextFillRightBox">
-              <textarea
+              <!-- <textarea
                 id="" v-model="result" :class="$style.homeTextFillTag" disable name="" cols="30" rows="25"
                 placeholder="To rewrite text, enter or paste it here and press &quot;Paraphrase.&quot;"
+              /> -->
+              <div
+                contenteditable
+                :class="$style.homeTextFillTag"
+                placeholder="To rewrite text, enter or paste it here and press &quot;Paraphrase.&quot;"
+                @input="handleInputResult"
+                @mouseup="handleMouseUp"
+                @blur="handleBlur"
+                v-text="result"
               />
             </div>
           </div>
@@ -467,6 +483,7 @@ function handleClosePopover() {
 
 .homeTextFillTag {
     resize: none;
+    height: 468px;
     width: 100%;
     border: none;
     padding: 30px 36px 8px 20px;
@@ -601,7 +618,7 @@ function handleClosePopover() {
   line-height: 16px;
   text-align: center;
   padding: 10px;
-  width: 130px;
+  width: 100px;
   height: 74px;
   display: flex;
   flex-direction: column;
@@ -618,10 +635,11 @@ function handleClosePopover() {
   width: 24px;
 }
 
+//box popover
 .popoverBox {
   position: fixed;
-  top: 100px;
-  left: 100px;
+  // top: 100px;
+  // left: 100px;
   width: 480px;
   max-height: 278px;
   background-color: white;
