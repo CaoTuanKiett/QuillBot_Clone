@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computePosition, flip, inline, offset, shift } from '@floating-ui/dom'
 import OpenAi from '@/api/openai'
 import iconLoading from '@/assets/icons/loading.svg'
 // import iconCheck from '@/assets/icons/check.svg'
@@ -47,13 +48,62 @@ async function parapharseText() {
 type SelectionSatuts = 'initial' | 'tooltip' | 'popover'
 
 const resultTooltip = ref<string>('')
-const boundingRect = ref<{ x: number, y: number }>({ x: 0, y: 0 })
 const status = ref<SelectionSatuts>('initial')
 let selection: Selection | null = null
 const mousePosition = ref<{ x: number, y: number }>({ x: 0, y: 0 })
 const inputRef = ref<HTMLElement | null>(null)
 const tooltipRef = ref<HTMLElement | null>(null)
 const popoverRef = ref<HTMLElement | null>(null)
+
+const rect = ref(new DOMRect())
+const childRects = ref<DOMRect[]>([])
+
+const virtualElement = ref({
+  getBoundingClientRect() {
+    return rect.value
+  },
+  getClientRects() {
+    return [childRects.value[childRects.value.length - 1]]
+  },
+})
+
+async function attachTooltip() {
+  if (tooltipRef.value) {
+    const { x, y, strategy } = await computePosition(virtualElement.value, tooltipRef.value, {
+      strategy: 'fixed',
+      placement: 'right-end',
+      middleware: [
+        flip(),
+        shift(),
+        offset(4),
+        inline(),
+      ],
+    })
+
+    tooltipRef.value.style.position = strategy
+    tooltipRef.value.style.left = `${x}px`
+    tooltipRef.value.style.top = `${y}px`
+  }
+}
+
+async function attachPopover() {
+  if (popoverRef.value) {
+    const { x, y, strategy } = await computePosition(virtualElement.value, popoverRef.value, {
+      strategy: 'fixed',
+      placement: 'top',
+      middleware: [
+        flip(),
+        shift(),
+        offset(4),
+        inline(),
+      ],
+    })
+
+    popoverRef.value.style.position = strategy
+    popoverRef.value.style.left = `${x}px`
+    popoverRef.value.style.top = `${y}px`
+  }
+}
 
 async function parapharse(text: string) {
   try {
@@ -77,12 +127,13 @@ onMounted(() => {
 
     const range = selection.getRangeAt(0)
 
-    const rect = range.getBoundingClientRect()
+    rect.value = range.getBoundingClientRect()
+    childRects.value = Array.from(range.getClientRects())
 
-    boundingRect.value = {
-      x: rect.right,
-      y: rect.top,
-    }
+    // boundingRect.value = {
+    //   x: rect.value.right,
+    //   y: rect.value.top,
+    // }
   })
 
   document.addEventListener('mousemove', (e) => {
@@ -100,6 +151,9 @@ function handleMouseUp() {
     return
 
   status.value = 'tooltip'
+
+  nextTick(attachTooltip)
+  // attachTooltip()
   console.log('handleMouseUp', selection?.toString())
 }
 
@@ -117,8 +171,6 @@ function handleReplace() {
 
 function reselectElement() {
   if (!selection?.anchorNode || !selection?.focusNode || status.value === 'initial') {
-    console.log('bleee')
-
     selection?.removeAllRanges()
     return
   }
@@ -141,6 +193,8 @@ function handleOpenPopover() {
   if (!selection || selection?.toString().length === 0)
     return
   status.value = 'popover'
+
+  nextTick(attachPopover)
 
   parapharse(selection?.toString())
 }
@@ -183,9 +237,6 @@ function handleInputResult(event: any) {
       ref="tooltipRef"
       :src="imgLogo"
       :style="{
-        position: 'fixed',
-        top: `${boundingRect.y}px`,
-        left: `${boundingRect.x}px`,
         width: '20px',
         height: '20px',
         zIndex: 999,
@@ -199,10 +250,9 @@ function handleInputResult(event: any) {
     <div
       v-else-if="status === 'popover'"
       id="popoverBox"
+      ref="popoverRef"
       :class="$style.popoverBox"
       :style="{
-        top: `${boundingRect.y}px`,
-        left: `${boundingRect.x}px`,
       }"
     >
       <div :class="$style.popoverBoxHeader">
