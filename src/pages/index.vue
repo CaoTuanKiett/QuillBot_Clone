@@ -788,7 +788,7 @@ function handleInputResult(event: any) {
 
 .popoverBoxContainerBody {
   width: 424px;
-  max-height: 120px;
+  height: 120px;
   overflow-y: auto;
   background-color: #f1f1f1;
   padding: 12px;
