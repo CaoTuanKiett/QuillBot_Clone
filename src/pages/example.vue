@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computePosition, flip, inline, offset, shift } from '@floating-ui/dom'
+import { getSelection } from '../core/get'
+// import { setSelection } from '../core/set'
 import OpenAi from '@/api/openai'
 import iconLoading from '@/assets/icons/loading.svg'
 import iconAI from '@/assets/icons/iconAI.svg'
@@ -12,6 +14,7 @@ import imgLogo from '@/assets/images/logo.png'
 
 const text = ref<string>('')
 const result = ref<string>('')
+const resultRef = ref<HTMLElement | null>(null)
 const languageList = ['English (US)', 'French', 'Spanish', 'German', 'All']
 const activeItem = ref<number>(1)
 const resultTooltip = ref<string>('')
@@ -22,7 +25,7 @@ const tooltipRef = ref<HTMLElement | null>(null)
 const popoverRef = ref<HTMLElement | null>(null)
 const rect = ref(new DOMRect())
 const childRects = ref<DOMRect[]>([])
-let selection: Selection | null = null
+let selection: any | null = null
 
 const virtualElement = ref({
   getBoundingClientRect: () => rect.value,
@@ -83,12 +86,22 @@ async function parapharse(text: string) {
 
 onMounted(() => {
   document.addEventListener('selectionchange', () => {
-    selection = window.getSelection()
-    if (selection?.rangeCount && selection.toString().length > 0) {
-      const range = selection.getRangeAt(0)
-      rect.value = range.getBoundingClientRect()
-      childRects.value = Array.from(range.getClientRects())
+    if (resultRef.value) {
+      selection = getSelection(resultRef.value)
+
+      if (selection?.text) {
+        status.value = 'tooltip'
+        nextTick(attachTooltip)
+        console.log('selection', selection.text)
+      }
+      else { status.value = 'initial' }
     }
+
+    // if (selection?.rangeCount && selection.toString().length > 0) {
+    // //   const range = selection.getRangeAt(0)
+    // //   rect.value = range.getBoundingClientRect()
+    // //   childRects.value = Array.from(range.getClientRects())
+    // }
   })
 
   document.addEventListener('mousemove', (e) => {
@@ -140,13 +153,6 @@ function handleOpenPopover() {
   }
 }
 
-function handleRefesh() {
-  if (selection && selection?.toString().length > 0) {
-    parapharse(selection.toString())
-    resultTooltip.value = ''
-  }
-}
-
 function isElementHovered(element: HTMLElement | null) {
   if (!element)
     return false
@@ -164,9 +170,9 @@ function handleInput(event: any) {
   text.value = event.target.textContent
 }
 
-function handleInputResult(event: any) {
-  result.value = event.target.textContent
-}
+// function handleInputResult(event: any) {
+//   result.value = event.target.textContent
+// }
 </script>
 
 <template>
@@ -210,7 +216,7 @@ function handleInputResult(event: any) {
       </div>
       <div :class="$style.popoverBoxContainer">
         <div :class="$style.popoverBoxContainerHeader">
-          <div :class="$style.popoverBoxContainerHeaderLeft" @click="handleRefesh">
+          <div :class="$style.popoverBoxContainerHeaderLeft">
             <img :src="iconRefesh" alt="iconRefesh">
             <p>Refresh</p>
           </div>
@@ -293,11 +299,12 @@ function handleInputResult(event: any) {
               </div>
             </div>
             <div :class="$style.homeTextFillRightBox">
-              <!-- <textarea
-                id="" v-model="result" :class="$style.homeTextFillTag" disable name="" cols="30" rows="25"
+              <textarea
+                id=""
+                ref="resultRef" v-model="result" :class="$style.homeTextFillTag" disable name="" cols="30" rows="25"
                 placeholder="To rewrite text, enter or paste it here and press &quot;Paraphrase.&quot;"
-              /> -->
-              <div
+              />
+              <!-- <div
                 contenteditable
                 :class="$style.homeTextFillTag"
                 placeholder="To rewrite text, enter or paste it here and press &quot;Paraphrase.&quot;"
@@ -305,7 +312,7 @@ function handleInputResult(event: any) {
                 @mouseup="handleMouseUp"
                 @blur="handleBlur"
                 v-text="result"
-              />
+              /> -->
             </div>
           </div>
         </div>
