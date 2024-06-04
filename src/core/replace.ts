@@ -1,47 +1,50 @@
-import { setContenteditableSelection } from './set'
-import { isInput, isTextarea } from './utils'
+import { setContentEditableSelection } from './set'
+import { isInput, isTextArea } from './utils'
 
-interface ReplaceOptions {
+interface ReplaceSelectionOptions {
+  text: string
   start: number
   end: number
-  text: string
 }
 
-export function replaceInputSelection(element: HTMLInputElement, options: ReplaceOptions) {
+export function replaceInputSelection(element: HTMLElement, option: ReplaceSelectionOptions) {
   const el = element as HTMLInputElement
-
   const value = el.value
-  const { start, end, text } = options
-
-  el.value = value.slice(0, start) + text + value.slice(end)
+  const { text, start, end } = option
+  const newValue = value.slice(0, start) + text + value.slice(end)
+  el.value = newValue
 }
 
-export function replaceTextareaSelection(element: HTMLTextAreaElement, options: ReplaceOptions) {
-  const el = element as HTMLTextAreaElement
-
+export function replaceTextAreaSelection(element: HTMLElement, option: ReplaceSelectionOptions) {
+  const el = element as HTMLInputElement
   const value = el.value
-  const { start, end, text } = options
-
-  el.value = value.slice(0, start) + text + value.slice(end)
+  const { text, start, end } = option
+  const newValue = value.slice(0, start) + text + value.slice(end)
+  el.value = newValue
 }
 
-export function replaceContenteditableSelection(element: HTMLElement, options: ReplaceOptions) {
-  setContenteditableSelection(element, {
-    start: options.start,
-    end: options.end,
+export function replaceContentEditableSelection(element: HTMLElement, option: ReplaceSelectionOptions) {
+  setContentEditableSelection(element, {
+    start: option.start,
+    end: option.end,
+    direction: 'forward',
   })
 
   const selection = window.getSelection()
-  const range = selection.getRangeAt(0)
+  const range = selection?.getRangeAt(0)
   range?.deleteContents()
-  range?.insertNode(document.createTextNode(options.text))
+  const textNode = document.createTextNode(option.text)
+  range?.insertNode(textNode)
 }
 
-export function replaceSelection(element: HTMLElement, option: ReplaceOptions) {
-  if (isInput(element))
-    return replaceInputSelection(element as HTMLInputElement, option)
-  else if (isTextarea(element))
-    return replaceTextareaSelection(element as HTMLTextAreaElement, option)
+export function replaceSelection(element: HTMLElement, option: ReplaceSelectionOptions) {
+  if(isInput(element))
+    replaceInputSelection(element,option)
+  else if( isTextArea(element))
+    replaceTextAreaSelection(element,option)
   else
-    return replaceContenteditableSelection(element, option)
+    replaceContentEditableSelection(element,option)
+
 }
+
+// export function replaceSelection()

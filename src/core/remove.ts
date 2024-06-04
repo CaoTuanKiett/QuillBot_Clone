@@ -1,33 +1,32 @@
-import { setContenteditableSelection } from './set'
-import { isInput, isTextarea } from './utils'
+import { setContentEditableSelection } from './set'
+import { isInput, isTextArea } from './utils'
 
-interface RemoveOptions {
+interface removeSelectionOptions {
   start: number
   end: number
 }
 
-export function removeInputSelection(element: HTMLInputElement, options: RemoveOptions) {
+export function removeInputSelection(element: HTMLElement, option: removeSelectionOptions) {
   const el = element as HTMLInputElement
-
   const value = el.value
-  const { start, end } = options
-
-  el.value = value.slice(0, start) + value.slice(end)
+  const { start, end } = option
+  const newValue = value.slice(0, start) + value.slice(end)
+  el.value = newValue
 }
 
-export function removeTextareaSelection(element: HTMLTextAreaElement, options: RemoveOptions) {
-  const el = element as HTMLTextAreaElement
-
+export function removeTextAreaSelection(element: HTMLElement, option: removeSelectionOptions) {
+  const el = element as HTMLInputElement
   const value = el.value
-  const { start, end } = options
-
-  el.value = value.slice(0, start) + value.slice(end)
+  const { start, end } = option
+  const newValue = value.slice(0, start) + value.slice(end)
+  el.value = newValue
 }
 
-export function removeContenteditableSelection(element: HTMLElement, options: RemoveOptions) {
-  setContenteditableSelection(element, {
-    start: options.start,
-    end: options.end,
+export function removeContentEditableSelection(element: HTMLElement, option: removeSelectionOptions) {
+  setContentEditableSelection(element, {
+    start: option.start,
+    end: option.end,
+    direction: 'forward',
   })
 
   const selection = window.getSelection()
@@ -35,11 +34,13 @@ export function removeContenteditableSelection(element: HTMLElement, options: Re
   range?.deleteContents()
 }
 
-export function removeSelection(element: HTMLElement, option: RemoveOptions) {
+export function removeSelectionContent(element: HTMLElement, option: removeSelectionOptions) {
   if (isInput(element))
-    return removeInputSelection(element as HTMLInputElement, option)
-  else if (isTextarea(element))
-    return removeTextareaSelection(element as HTMLTextAreaElement, option)
+    removeInputSelection(element, option)
+  else if (isTextArea(element))
+    removeTextAreaSelection(element, option)
   else
-    return removeContenteditableSelection(element, option)
+    removeContentEditableSelection(element, option)
 }
+
+// export function removeSelection()

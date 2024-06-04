@@ -1,15 +1,9 @@
 export function isInput(element: HTMLElement) {
   return element.tagName === 'INPUT'
 }
-
-export function isTextarea(element: HTMLElement) {
+export function isTextArea(element: HTMLElement) {
   return element.tagName === 'TEXTAREA'
 }
-
-export function isInputOrTextarea(element: HTMLElement) {
-  return isInput(element) || isTextarea(element)
-}
-
-export function isContentEditable(element: HTMLElement): boolean {
-  return element.isContentEditable
+export function isInputOrTextArea(element: HTMLElement) {
+  return isInput(element) || isTextArea(element)
 }

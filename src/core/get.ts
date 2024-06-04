@@ -1,11 +1,4 @@
-// <div contenteditable>Hello <b>World</b>  </div>
-// Hello <b>World</b>
-// start: 3
-// end: 9
-// direction: forward
-// text: llo <b>Wor</b>
-
-import { isInput, isTextarea } from './utils'
+import { isInput, isTextArea } from './utils'
 
 interface GetSelectionResult {
   start: number
@@ -14,92 +7,66 @@ interface GetSelectionResult {
   text: string
 }
 
-export function getInputSelection(element: HTMLInputElement) {
-  const el = element as HTMLInputElement
+export function getInputSelection(element: HTMLElement) {
+  const inputEl = element as HTMLInputElement
 
   const result = {
-    start: el.selectionStart,
-    end: el.selectionEnd,
-    direction: el.selectionDirection,
-    text: el.value.slice(el.selectionStart || 0, el.selectionEnd || 0),
+    start: inputEl.selectionStart,
+    end: inputEl.selectionEnd,
+    direction: inputEl.selectionDirection as 'forward' | 'backward' | 'none',
+    text: inputEl.value.slice(inputEl.selectionStart || 0, inputEl.selectionEnd || 0),
   }
-
   return result as GetSelectionResult
 }
 
-export function getTextareaSelection(element: HTMLTextAreaElement) {
-  const el = element as HTMLTextAreaElement
-
+export function getTextAreaSelection(element: HTMLElement) {
+  const textareaEl = element as HTMLTextAreaElement
   const result = {
-    start: el.selectionStart,
-    end: el.selectionEnd,
-    direction: el.selectionDirection,
-    text: el.value.slice(el.selectionStart || 0, el.selectionEnd || 0),
+    start: textareaEl.selectionStart,
+    end: textareaEl.selectionEnd,
+    direction: textareaEl.selectionDirection as 'forward' | 'backward' | 'none',
+    text: textareaEl.value.slice(textareaEl.selectionStart || 0, textareaEl.selectionEnd || 0),
   }
-
   return result as GetSelectionResult
 }
 
-export function getSelectionCharacterOffsetWithin(element: HTMLElement) {
-  let start = 0
-  let end = 0
-
+export function getContentEditableSelection(element: HTMLElement) {
+  const contentEditable = element as HTMLElement
   const selection = window.getSelection()
 
-  if (!selection || selection.rangeCount === 0)
-    return { start, end }
+  const range = selection?.getRangeAt(0)
+  if (!range)
+    return
 
-  const range = selection.getRangeAt(0)
-  const preCaretRange = range.cloneRange()
+  const rangeClone = range?.cloneRange()
+  rangeClone?.selectNodeContents(contentEditable)
+  rangeClone?.setEnd(range?.startContainer, range?.startOffset)
+  // Get start position
+  const start = rangeClone?.toString().length || 0
+  rangeClone?.setEnd(range?.endContainer, range?.endOffset)
 
-  preCaretRange.selectNodeContents(element)
-  preCaretRange.setEnd(range.startContainer, range.startOffset)
-
-  start = preCaretRange.toString().length
-
-  preCaretRange.setEnd(range.endContainer, range.endOffset)
-  end = preCaretRange.toString().length
-
-  return { start, end }
-}
-
-export function getDefaultSelection(_element: HTMLElement) {
-  return {
-    start: 0,
-    end: 0,
-    direction: 'none' as const,
-    text: '',
-  }
-}
-
-export function getContenteditableSelection(element: HTMLElement) {
-  const selection = window.getSelection()
-
-  if (!selection?.rangeCount)
-    return getDefaultSelection(element)
-
-  const range = selection.getRangeAt(0)
-
-  const { start, end } = getSelectionCharacterOffsetWithin(range.commonAncestorContainer as HTMLElement)
-
-  const cloneSelection = range!.cloneContents()
-
+  // Get end position
+  const end = rangeClone?.toString().length || 0
   const div = document.createElement('div')
-  div.appendChild(cloneSelection)
+  div.appendChild(range.cloneContents())
 
-  return {
+  const result = {
     start,
     end,
-    direction: 'forward' as const,
-    text: div.innerHTML || range?.toString() || div.textContent || '',
+    direction: 'forward',
+    text: div.innerHTML || range.toString() || div.textContent || '',
   }
+
+  return result as GetSelectionResult
 }
 
 export function getSelection(element: HTMLElement) {
   if (isInput(element))
     return getInputSelection(element)
-  else if (isTextarea(element))
-    return getTextareaSelection(element)
+
+  else if (isTextArea(element))
+    return getTextAreaSelection(element)
+
   else
-    return getContenteditableSelection(element)
+    return getContentEditableSelection(element)
 }
